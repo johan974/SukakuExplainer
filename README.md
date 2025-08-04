@@ -1,3 +1,10 @@
+# Johan ... explaining
+To create the explainer: 
+- I created a pom.xml Maven file. 
+- Run the app: 
+```
+$  java --add-exports java.desktop/com.sun.java.swing.plaf.motif=ALL-UNNAMED --add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED -jar target/sudokuexplainer-1.0.jar
+```
 # Sukaku Explainer:
 
 Is a sukaku (Pencilmark Sudoku) and sudoku Solver/Rater with a command line entry point and a GUI. It is based on serate
