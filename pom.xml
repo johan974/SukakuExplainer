@@ -112,22 +112,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <mainClass>diuf.sudoku.gui.SudokuExplainer</mainClass>
-                        </manifest>
-                        <!-- If you have a custom manifest file -->
-                        <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
-                        <!-- OR configure manifest entries directly -->
-                        <manifestEntries>
-                            <Implementation-Title>${project.name}</Implementation-Title>
-                            <Implementation-Version>${project.version}</Implementation-Version>
-                            <Implementation-Vendor>sudokuexplainer.com</Implementation-Vendor>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
             </plugin>
         </plugins>
     </build>
