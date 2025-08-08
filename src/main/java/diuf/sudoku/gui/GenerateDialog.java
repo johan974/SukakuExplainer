@@ -25,7 +25,7 @@ public class GenerateDialog extends JDialog {
 
     private static final long serialVersionUID = 8620081149465721387L;
 
-    private enum Difficulty {
+    public enum Difficulty {
         Easy {
 
             @Override
@@ -3236,40 +3236,34 @@ public class GenerateDialog extends JDialog {
         btnPrev.setEnabled(false);
         btnPrev.setMnemonic(KeyEvent.VK_LEFT);
         btnPrev.setToolTipText("Restore the previous Sudoku");
-        btnPrev.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                prev();
-            }
-        });
+        btnPrev.addActionListener(e -> prev());
         pnlGenerate.add(btnPrev);
         btnGenerate = new JButton();
         btnGenerate.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 12));
         btnGenerate.setText("Generate");
         btnGenerate.setMnemonic(KeyEvent.VK_G);
         btnGenerate.setToolTipText("Generate a new random Sudoku that matches the given parameters");
-        btnGenerate.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (generator == null) {
-                    if (!isTechniqueSetSafe()) {
-                        int result = JOptionPane.showConfirmDialog(
-                                GenerateDialog.this,
-                                "<html><body>" +
-                                "<b>Warning</b>: not all solving techniques are enabled.<br>" +
-                                "The Sudoku Explainer may not be able to generate<br>" +
-                                "a Sudoku with the selected parameters (it may loop<br>" +
-                                "for ever until you stop it).<br><br>" +
-                                "Do you want to continue anyway?" +
-                                "</body></html>",
-                                GenerateDialog.this.getTitle(),
-                                JOptionPane.YES_NO_OPTION,
-                                JOptionPane.QUESTION_MESSAGE);
-                        if (result != JOptionPane.YES_OPTION)
-                            return;
-                    }
-                    generate();
-                } else
-                    stop();
-            }
+        btnGenerate.addActionListener(e -> {
+            if (generator == null) {
+                if (!isTechniqueSetSafe()) {
+                    int result = JOptionPane.showConfirmDialog(
+                            GenerateDialog.this,
+                            "<html><body>" +
+                            "<b>Warning</b>: not all solving techniques are enabled.<br>" +
+                            "The Sudoku Explainer may not be able to generate<br>" +
+                            "a Sudoku with the selected parameters (it may loop<br>" +
+                            "for ever until you stop it).<br><br>" +
+                            "Do you want to continue anyway?" +
+                            "</body></html>",
+                            GenerateDialog.this.getTitle(),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
+                    if (result != JOptionPane.YES_OPTION)
+                        return;
+                }
+                generate();
+            } else
+                stop();
         });
         pnlGenerate.add(btnGenerate);
         btnNext = new JButton();

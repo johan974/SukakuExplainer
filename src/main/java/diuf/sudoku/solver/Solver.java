@@ -185,7 +185,7 @@ if (Settings.getInstance().revisedRating()==1) {
         addIfWorth(SolvingTechnique.VWXYZWing, indirectHintProducers, new VWXYZWing());
 		addIfWorth(SolvingTechnique.AlignedPairExclusion, indirectHintProducers, new AlignedPairExclusion());
         addIfWorth(SolvingTechnique.FiveStrongLinks, indirectHintProducers, new StrongLinks(5));        
-        addIfWorth(SolvingTechnique.NakedSextGen, indirectHintProducers, new NakedSetGen(6));
+        addIfWorth(SolvingTechnique.NakedSextGen, indirectHintProducers, new NakedSetGen(5));
         addIfWorth(SolvingTechnique.UVWXYZWing, indirectHintProducers, new UVWXYZWing());
         addIfWorth(SolvingTechnique.SixStrongLinks, indirectHintProducers, new StrongLinks(6));        
         chainingHintProducers = new ArrayList<IndirectHintProducer>();
@@ -254,7 +254,7 @@ else {
         addIfWorth(SolvingTechnique.VWXYZWing, indirectHintProducers, new VWXYZWing());
 		addIfWorth(SolvingTechnique.AlignedPairExclusion, indirectHintProducers, new AlignedPairExclusion());
         addIfWorth(SolvingTechnique.FiveStrongLinks, indirectHintProducers, new StrongLinks(5));        
-        addIfWorth(SolvingTechnique.NakedSextGen, indirectHintProducers, new NakedSetGen(6));
+        addIfWorth(SolvingTechnique.NakedSextGen, indirectHintProducers, new NakedSetGen(5));
         addIfWorth(SolvingTechnique.UVWXYZWing, indirectHintProducers, new UVWXYZWing());
         addIfWorth(SolvingTechnique.SixStrongLinks, indirectHintProducers, new StrongLinks(6));        
         chainingHintProducers = new ArrayList<IndirectHintProducer>();
