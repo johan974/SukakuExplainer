@@ -8,13 +8,12 @@ package diuf.sudoku.gui;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.*;
-
 import diuf.sudoku.*;
 import diuf.sudoku.Grid.*;
 import diuf.sudoku.io.*;
 import diuf.sudoku.solver.*;
 import diuf.sudoku.tools.*;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * The main class and controller. All actions performed in the gui
@@ -25,15 +24,13 @@ import diuf.sudoku.tools.*;
  * This class only handles the logic of the filter for the hints tree,
  * and a few trivial tasks. All other operations are redirected to other
  * classes.
- * @see diuf.sudoku.gui.SudokuFrame
  * @see diuf.sudoku.solver.Solver
  */
+@Slf4j
 public class SudokuExplainer {
 
     private Grid grid; // The Sudoku grid
     private Solver solver; // The Sudoku solver
-    private SudokuFrame frame; // The main gui frame
-    private SudokuPanel panel; // The sudoku grid panel
 
     private List<Hint> unfilteredHints = null; // All hints (unfiltered)
     private List<Hint> filteredHints = null; // All hints (filtered)
@@ -52,21 +49,6 @@ public class SudokuExplainer {
 		gridStack = new Stack<Grid>();	// fix #101 - reset Undo stack (in constructor)
 		solver = new Solver(grid);
         solver.rebuildPotentialValues();
-        frame = new SudokuFrame();
-        frame.setEngine(this);
-        panel = frame.getSudokuPanel();
-        panel.setSudokuGrid(grid);
-        panel.setEngine(this);
-        repaintHintsTree();
-        frame.pack();
-        java.awt.Dimension screenSize = frame.getToolkit().getScreenSize();
-        java.awt.Insets insets = frame.getToolkit().getScreenInsets(frame.getGraphicsConfiguration());
-        java.awt.Dimension windowSize = frame.getSize();
-        int screenWidth = screenSize.width - insets.left - insets.right;
-        int screenHeight = screenSize.height - insets.top - insets.bottom;
-        frame.setLocation((screenWidth - windowSize.width) / 2 + insets.left,
-                (screenHeight - windowSize.height) / 2 + insets.top);
-        frame.setVisible(true);
     }
 
     private void resetFilterCache() {
@@ -188,193 +170,6 @@ public class SudokuExplainer {
     }
 
     /**
-     * Enable or disable the filter of hints with similar outcomes
-     * @param value whether the filter is enabled
-     */
-    public void setFiltered(boolean value) {
-        resetFilterCache();
-        this.isFiltered = value;
-        filterHints();
-        repaintAll();
-    }
-
-    /**
-     * Get whether the filter of hints with similar outcomes is enabled
-     * @return whether the filter is enabled
-     */
-    public boolean isFiltered() {
-        return this.isFiltered;
-    }
-
-    private void repaintHints() {
-        if (selectedHints.size() == 1)
-            frame.setCurrentHint(grid, selectedHints.get(0), true);
-        else {
-            frame.setCurrentHint(grid, null, !selectedHints.isEmpty());
-            if (selectedHints.size() > 1)
-                paintMultipleHints(selectedHints);
-        }
-    }
-
-    private void paintMultipleHints(List<Hint> hints) {
-        Map<Cell, BitSet> redPotentials = new HashMap<Cell, BitSet>();
-        Map<Cell, BitSet> greenPotentials = new HashMap<Cell, BitSet>();
-        for (Hint hint : hints) {
-            Cell cell = hint.getCell();
-            if (cell != null)
-                greenPotentials.put(cell, SingletonBitSet.create(hint.getValue()));
-            if (hint instanceof IndirectHint) {
-                IndirectHint ihint = (IndirectHint)hint;
-                Map<Cell, BitSet> removable = ihint.getRemovablePotentials();
-                //for (Cell rCell : removable.keySet()) {
-                    //BitSet values = removable.get(rCell);
-                for (Map.Entry<Cell, BitSet> entry : removable.entrySet()) {
-                	Cell rCell = entry.getKey();
-                    BitSet values = entry.getValue();
-                    if (redPotentials.containsKey(rCell))
-                        redPotentials.get(rCell).or(values);
-                    else
-                        redPotentials.put(rCell, (BitSet)values.clone());
-                }
-            }
-        }
-
-        panel.setRedPotentials(redPotentials);
-        panel.setGreenPotentials(greenPotentials);
-        panel.setBluePotentials(null);
-        panel.setGreenCells(greenPotentials.keySet());
-        panel.repaint();
-        frame.setExplanations(HtmlLoader.loadHtml(this, "Multiple.html"));
-    }
-
-    public boolean isValueAllGiven(Grid grid, int value) {
-        //Region[] regions = grid.getRegions(Grid.Block.class);
-        Region[] regions = Grid.getRegions(1); //rows, works with latin sqaures!
-        for (Region region : regions) {
-            if (!region.contains(grid, value))
-                return false;
-        }
-        return true;
-    }
-
-    /**
-     * Invoked when the user manually types a value in a cell of
-     * the sudoku grid.
-     * @param cell the cell
-     * @param value the value typed in the cell, or <code>0</code> if
-     * the cell's value was erased.
-     */
-    public void cellValueTyped(Cell cell, int value) {
-        //int oldValue = cell.getValue();
-        int oldValue = grid.getCellValue(cell.getX(), cell.getY());
-        boolean same = oldValue == value;
-        if (!same)
-            pushGrid();
-        //cell.setValue(value);
-        grid.setCellValue(cell.getX(), cell.getY(), value);
-        if (!same && (value == 0 || oldValue != 0))
-            solver.rebuildPotentialValues();
-        else
-            solver.cancelPotentialValues();
-        boolean needRepaintHints = (filteredHints != null);
-        clearHints0();
-        this.selectedHints.clear();
-        if (needRepaintHints) {
-            repaintHintsTree();
-            repaintHints();
-        }
-    }
-
-    public void candidateTyped(Cell cell, int candidate) {
-        pushGrid();
-        int cellIndex = cell.getIndex();
-        if (grid.hasCellPotentialValue(cellIndex, candidate))
-        	grid.removeCellPotentialValue(cellIndex, candidate);
-        else
-        	grid.addCellPotentialValue(cellIndex, candidate);
-        solver.cancelPotentialValues();
-    }
-
-    /**
-     * Selects the given hints. Repaint the appropriate views.
-     * @param nodes the selected hint nodes
-     */
-    public void hintsSelected(Collection<HintNode> nodes) {
-        this.selectedHints.clear();
-        for (HintNode node : nodes) {
-            Hint hint = node.getHint();
-            if (hint != null)
-                this.selectedHints.add(hint);
-        }
-        repaintHints();
-    }
-
-    private void repaintAll() {
-        repaintHintsTree();
-        repaintHints();
-        panel.repaint();
-    }
-
-    public void clearGrid() {
-        grid = new Grid();
-		gridStack = new Stack<Grid>();	// fix #101 - reset Undo stack (clearGrid())
-        solver = new Solver(grid);
-        solver.rebuildPotentialValues();
-        panel.setSudokuGrid(grid);
-        clearHints();
-        frame.showWelcomeText();
-    }
-
-    public void setGrid(Grid grid) {
-        this.grid = grid;
-		gridStack = new Stack<Grid>();	// fix #101 - reset Undo stack (setGrid())
-        solver = new Solver(grid);
-        solver.rebuildPotentialValues();
-        panel.setSudokuGrid(grid);
-        panel.clearSelection();
-        clearHints();
-        frame.setExplanations("");
-    }
-
-    public Grid getGrid() {
-        return panel.getSudokuGrid();
-    }
-
-    public void clearHints() {
-        unfilteredHints = null;
-        resetFilterCache();
-        filterHints();
-        selectedHints.clear();
-        panel.clearSelection();
-        repaintAll();
-    }
-
-    public void clearHints0() {
-        unfilteredHints = null;
-        resetFilterCache();
-        filterHints();
-        selectedHints.clear();
-        panel.clearFocus();
-        repaintAll();
-    }
-
-    public void rebuildSolver() {
-        this.solver = new Solver(grid);
-    }
-
-    private void displayError(Throwable ex) {
-        ex.printStackTrace();
-        try {
-            repaintAll();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        frame.setExplanations("<html><body><font color=\"red\">" +
-                ex.toString().replace("\n", "<br>") +
-        "</font></body></html>");
-    }
-
-    /**
      * Check the validity of the current Sudoku grid.
      * Corresponding warning are automatically added and
      * displayed.
@@ -389,13 +184,11 @@ public class SudokuExplainer {
             selectedHints.add(hint);
         }
         filterHints();
-        repaintAll();
         return (hint == null);
     }
 
     public void resetPotentials() {
         solver.rebuildPotentialValues();
-        clearHints();
     }
 
     private Hint getNextHintImpl() {
@@ -406,27 +199,25 @@ public class SudokuExplainer {
         // Create temporary buffers for gathering all the hints again
         final List<Hint> buffer = new ArrayList<Hint>();
         final StrongReference<Hint> newHint = new StrongReference<Hint>();
-        solver.gatherHints(unfilteredHints, buffer, new HintsAccumulator() {
-            /*
-             * Trick: gatherHints will get all the hints it can find, one after
-             * the other, sorted by difficulty. It will call add() for every hint.
-             * To get only the first hint, we throw an InterruptedException after the
-             * first produced hint that was not filtered.
-             */
-            public void add(Hint hint) throws InterruptedException {
-                if (!buffer.contains(hint)) {
-                    buffer.add(hint);
-                    boolean isNew = (buffer.size() > unfilteredHints.size());
-                    if (isNew) {
-                        unfilteredHints.add(hint); // This hint is new for the unfiltered list
-                        if (isWorth(hint)) {
-                            newHint.setValue(hint);
-                            throw new InterruptedException();
-                        }
+        /*
+         * Trick: gatherHints will get all the hints it can find, one after
+         * the other, sorted by difficulty. It will call add() for every hint.
+         * To get only the first hint, we throw an InterruptedException after the
+         * first produced hint that was not filtered.
+         */
+        solver.gatherHints(unfilteredHints, buffer, hint -> {
+            if (!buffer.contains(hint)) {
+                buffer.add(hint);
+                boolean isNew = (buffer.size() > unfilteredHints.size());
+                if (isNew) {
+                    unfilteredHints.add(hint); // This hint is new for the unfiltered list
+                    if (isWorth(hint)) {
+                        newHint.setValue(hint);
+                        throw new InterruptedException();
                     }
                 }
             }
-        }, frame);
+        });
         selectedHints.clear();
         Hint hint = null;
         if (newHint.isValueSet())
@@ -441,23 +232,21 @@ public class SudokuExplainer {
                 addFilteredHintAndUpdateFilter(hint);
                 selectedHints.add(hint);
             }
-            repaintAll();
         } catch (Throwable ex) {
-            displayError(ex);
+            log.error("Error while getting next hint", ex);
         }
     }
 
     public void getAllHints() {
         try {
-            unfilteredHints = solver.getAllHints(frame);
+            unfilteredHints = solver.getAllHints();
             selectedHints.clear();
             resetFilterCache();
             filterHints();
             if (!filteredHints.isEmpty())
                 selectedHints.add(filteredHints.get(0));
-            repaintAll();
         } catch (Throwable ex) {
-            displayError(ex);
+            log.error("Error while getting hints", ex);
         }
     }
 
@@ -466,12 +255,17 @@ public class SudokuExplainer {
 	  if ( selectedHints.size() >= 1 ) {
 		pushGrid();
         for (Hint hint : selectedHints)
-            //hint.apply();
         	hint.apply(grid);
         clearHints();
-        repaintAll();
 	  }
 	 }
+    }
+
+    public void clearHints() {
+        unfilteredHints = null;
+        resetFilterCache();
+        filterHints();
+        selectedHints.clear();
     }
 
     public void undoStep() {
@@ -485,45 +279,13 @@ public class SudokuExplainer {
 	  }
     }
 
-    private void repaintHintsTree() {
-        if (filteredHints == null) {
-            List<Hint> noHints = Collections.emptyList();
-            HintNode root = new HintsTreeBuilder().buildHintsTree(noHints);
-            frame.setHintsTree(root, null, false);
-        } else {
-            HintNode root = new HintsTreeBuilder().buildHintsTree(filteredHints);
-            HintNode selected = null;
-            if (root != null && selectedHints.size() == 1)
-                selected = root.getNodeFor(selectedHints.get(0));
-            frame.setHintsTree(root, selected, unfilteredHints.size() > 1);
-        }
-    }
-
-    public void pasteGrid() {
-        Grid copy = new Grid();
-        this.grid.copyTo(copy);
-        clearGrid();
-        ErrorMessage message = SudokuIO.loadFromClipboard(grid);
-        if (message == null || !message.isFatal()) {
-			if ( grid.isSudoku() == 1 ) {
-            	solver.rebuildPotentialValues();
-				gridStack = new Stack<Grid>();	// fix #101 - reset Undo stack (pasteGrid())
-			}
-		}
-        else {
-            copy.copyTo(grid);
-		}
-        if (message != null)
-            JOptionPane.showMessageDialog(frame, message.toString(), "Paste",
-                    (message.isFatal() ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE));
-    }
 
     public void pushGrid() {
         Grid copy = new Grid();
         this.grid.copyTo(copy);
         this.gridStack.push(copy);
       }
-      
+
       private void popGrid() {
         if (!this.gridStack.isEmpty()) {
           Grid prev = this.gridStack.pop();
@@ -531,48 +293,8 @@ public class SudokuExplainer {
 		  //This next line will mess UNDO with Sukaku
           //this.solver.rebuildPotentialValues();
           clearHints();
-          repaintAll();
         }
       }
-
-    public void copyGrid(boolean line) {
-        SudokuIO.saveToClipboard(grid, line);
-    }
-
-//@sudokuMonster: Frame --> Engine ---> IO ---> Grid
-    public void copyVariantGrid(boolean line) {
-        SudokuIO.saveVariantToClipboard(grid, line);
-    }
-
-	public void copyPencilmarkGrid(boolean line) {	
-		SudokuIO.savePencilmarksToClipboard(grid, line);
-	}
-
-    public void loadGrid(File file) {
-        Grid copy = new Grid();
-        this.grid.copyTo(copy);
-        clearGrid();
-        ErrorMessage message = SudokuIO.loadFromFile(grid, file);
-        if (message == null || !message.isFatal()) {
-			if ( grid.isSudoku() == 1 ) {
-				solver.rebuildPotentialValues();
-				gridStack = new Stack<Grid>();	// fix #101 - reset Undo stack (loadGrid())
-			}
-		}
-        else {
-            copy.copyTo(grid);
-		}
-        if (message != null)
-            JOptionPane.showMessageDialog(frame, message.toString(), "Paste",
-                    (message.isFatal() ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE));
-    }
-
-    public void saveGrid(File file) {
-        ErrorMessage message = SudokuIO.saveToFile(grid, file);
-        if (message != null)
-            JOptionPane.showMessageDialog(frame, message.toString(), "Paste",
-                    JOptionPane.ERROR_MESSAGE);
-    }
 
     /**
      * Solve the current grid using brute-force.
@@ -587,19 +309,13 @@ public class SudokuExplainer {
             selectedHints.add(hint);
         }
         filterHints();
-        repaintAll();
     }
 
-    /**
-     * Solve the current Sudoku grid using logical rules.
-     * Display a new hint giving the required rules, and the
-     * approximate rating of the Sudoku.
-     */
     public Hint analyse() {
         try {
             clearHints();
             unfilteredHints = new ArrayList<Hint>();
-            Hint hint = solver.analyse(frame);
+            Hint hint = solver.analyse();
             if (hint != null) {
                 unfilteredHints.add(hint);
                 selectedHints.add(hint);
@@ -609,10 +325,8 @@ public class SudokuExplainer {
         } catch (UnsupportedOperationException ex) {
             throw ex;
         } catch (Throwable ex) {
-            displayError(ex);
+            log.error( "Error while analysing the grid", ex);
             return null;
-        } finally {
-            repaintAll();
         }
     }
 
@@ -628,7 +342,6 @@ public class SudokuExplainer {
             selectedHints.add(hint);
         }
         filterHints();
-        repaintAll();
     }
 
     /**
@@ -645,51 +358,15 @@ public class SudokuExplainer {
                 String htmlText = HtmlLoader.loadHtml(this, clueFile);
                 String clueHtml = rule.getClueHtml(grid, isBig);
                 htmlText = htmlText.replace("{0}", clueHtml);
-                // This is rather hacky...
-                if (htmlText.indexOf("<b1>") >= 0) {
-                    panel.setBlueRegions(hint.getRegions());
-                }
                 htmlText = HtmlLoader.formatColors(htmlText);
-                frame.setExplanations(htmlText);
                 unfilteredHints = null;
                 resetFilterCache();
                 filterHints();
             } else {
                 addFilteredHintAndUpdateFilter(hint);
                 selectedHints.add(hint);
-                repaintAll();
             }
         }
-    }
-
-    /**
-     * Start point of the application. No splash screen is
-     * handled there.
-     * @param args program arguments (not used)
-     */
-    public static void main(String[] args) {
-        Settings.getInstance().load();
-		try {
-            String lookAndFeelClassName = Settings.getInstance().getLookAndFeelClassName();
-            if (lookAndFeelClassName == null)
-                lookAndFeelClassName = UIManager.getSystemLookAndFeelClassName();
-            UIManager.setLookAndFeel(lookAndFeelClassName);
-			Settings.getInstance().save();
-        } catch(Exception e) {
-            try {
-                UIManager.setLookAndFeel(
-                        UIManager.getCrossPlatformLookAndFeelClassName()
-                );
-            } catch (Exception fallbackEx) {
-                fallbackEx.printStackTrace();
-            }
-            e.printStackTrace();
-        }
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new SudokuExplainer();
-            }
-        });
     }
 
 }

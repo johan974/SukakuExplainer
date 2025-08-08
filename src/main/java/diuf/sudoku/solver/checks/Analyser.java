@@ -25,17 +25,15 @@ import diuf.sudoku.tools.*;
 public class Analyser implements WarningHintProducer {
 
     private final Solver solver;
-    private final Asker asker;
 
 
-    public Analyser(Solver solver, Asker asker) {
+    public Analyser(Solver solver) {
         this.solver = solver;
-        this.asker = asker;
     }
 
     public void getHints(Grid grid, HintsAccumulator accu)
     throws InterruptedException {
-        Map<Rule,Integer> rules = solver.solve(asker);
+        Map<Rule,Integer> rules = solver.solve();
         Map<String,Integer> ruleNames = solver.toNamedList(rules);
         Hint hint = new AnalysisInfo(this, rules, ruleNames);
         accu.add(hint);

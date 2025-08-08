@@ -9,7 +9,6 @@ import java.security.*;
 import java.util.*;
 
 import diuf.sudoku.*;
-//import diuf.sudoku.Settings.*;
 import diuf.sudoku.solver.checks.*;
 import diuf.sudoku.solver.rules.*;
 import diuf.sudoku.solver.rules.chaining.*;
@@ -360,7 +359,7 @@ else {
             int result = Thread.currentThread().getPriority();
             Thread.currentThread().setPriority((Thread.NORM_PRIORITY + Thread.MIN_PRIORITY * 2) / 3);
             return result;
-        } catch (AccessControlException ex) {}
+        } catch (Exception ex) {}
         return 0;
     }
 
@@ -373,7 +372,7 @@ else {
     private void normalPriority(int priority) {
         try {
             Thread.currentThread().setPriority(priority);
-        } catch (AccessControlException ex) {}
+        } catch (Exception ex) {}
     }
 
     /**
@@ -419,7 +418,7 @@ else {
     }
 
     public void gatherHints(List<Hint> previousHints, final List<Hint> result,
-            HintsAccumulator accu, Asker asker) {
+            HintsAccumulator accu) {
 
         int oldPriority = lowerPriority();
         boolean isAdvanced = false;
@@ -446,7 +445,7 @@ else {
             // We have not been interrupted yet. So no rule has been found yet
             if (!hasWarning &&
                     !(advancedHintProducers.isEmpty() && experimentalHintProducers.isEmpty()) &&
-                    (isUsingAdvanced || asker.ask(ADVANCED_WARNING2))) {
+                    (isUsingAdvanced)) {
                 isAdvanced = true;
                 isUsingAdvanced = true;
                 for (HintProducer producer : advancedHintProducers)
@@ -462,7 +461,7 @@ else {
         normalPriority(oldPriority);
     }
 
-    public List<Hint> getAllHints(Asker asker) {
+    public List<Hint> getAllHints() {
         int oldPriority = lowerPriority();
         List<Hint> result = new ArrayList<Hint>();
         HintsAccumulator accu = new DefaultHintsAccumulator(result);
@@ -487,7 +486,7 @@ else {
             }
             if (result.isEmpty() &&
                     !(advancedHintProducers.isEmpty() && experimentalHintProducers.isEmpty()) &&
-                    (isUsingAdvanced || asker.ask(ADVANCED_WARNING2))) {
+                    (isUsingAdvanced)) {
                 isUsingAdvanced = true;
                 for (IndirectHintProducer producer : advancedHintProducers) {
                     if (result.isEmpty())
@@ -527,7 +526,7 @@ else {
      * @throws UnsupportedOperationException if the Sudoku cannot
      * be solved without recursive guessing (brute-force).
      */
-    public Map<Rule,Integer> solve(Asker asker) {
+    public Map<Rule,Integer> solve() {
         int oldPriority = lowerPriority();
         // rebuildPotentialValues();
         Map<Rule,Integer> usedRules = new TreeMap<Rule,Integer>(new RuleComparer());
@@ -544,7 +543,7 @@ else {
                 for (IndirectHintProducer producer : chainingHintProducers2)
                     producer.getHints(grid, accu);
                 if (!(advancedHintProducers.isEmpty() && experimentalHintProducers.isEmpty()) &&
-                        (asker == null || isUsingAdvanced || asker.ask(ADVANCED_WARNING1))) {
+                        (isUsingAdvanced)) {
                     isUsingAdvanced = true;
                     for (IndirectHintProducer producer : advancedHintProducers)
                         producer.getHints(grid, accu);
@@ -1066,7 +1065,7 @@ else {
         return hints;
     }
 
-    public Hint analyse(Asker asker) {
+    public Hint analyse() {
         Grid copy = new Grid();
         grid.copyTo(copy);
         try {
@@ -1076,7 +1075,7 @@ else {
                     producer.getHints(grid, accu);
                 for (WarningHintProducer producer : warningHintProducers)
                     producer.getHints(grid, accu);
-                Analyser engine = new Analyser(this, asker);
+                Analyser engine = new Analyser(this);
                 engine.getHints(grid, accu);
             } catch (InterruptedException willProbablyHappen) {}
             return accu.getHint();

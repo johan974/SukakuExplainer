@@ -2,18 +2,16 @@ package diuf.sudoku.generator;
 
 
 import diuf.sudoku.Grid;
-import diuf.sudoku.gui.GenerateDialog;
+import diuf.sudoku.gui.Difficulty;
 import diuf.sudoku.solver.Hint;
-import diuf.sudoku.solver.HintsAccumulator;
 import diuf.sudoku.solver.Solver;
-import diuf.sudoku.tools.Asker;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static diuf.sudoku.gui.GenerateDialog.Difficulty.*;
+import static diuf.sudoku.gui.Difficulty.Hard;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
@@ -21,7 +19,7 @@ class GeneratorTest {
     @Test
     void testGenerateAndGet1Hint() {
         Generator generator = new Generator();
-        GenerateDialog.Difficulty hard = Hard;
+        Difficulty hard = Hard;
         Grid grid = generator.generate(List.of(Symmetry.BiDiagonal, Symmetry.Orthogonal, Symmetry.Rotational90,
                         Symmetry.Rotational180, Symmetry.Full),
                 hard.getMinDifficulty(), hard.getMaxDifficulty(), hard.getincludeDifficulty1(), hard.getincludeDifficulty2(),
@@ -42,14 +40,14 @@ class GeneratorTest {
                 hints.add(hint);
                 throw new InterruptedException(); // Stop gathering hints after the first one
             }
-        }, question -> false);
+        });
         assertFalse(hints.isEmpty(), "Hints should not be empty");
     }
 
     @Test
     void testGenerateAndGetAllHints() {
         Generator generator = new Generator();
-        GenerateDialog.Difficulty hard = Hard;
+        Difficulty hard = Hard;
         Grid grid = generator.generate(List.of(Symmetry.BiDiagonal, Symmetry.Orthogonal, Symmetry.Rotational90,
                         Symmetry.Rotational180, Symmetry.Full),
                 hard.getMinDifficulty(), hard.getMaxDifficulty(), hard.getincludeDifficulty1(), hard.getincludeDifficulty2(),
@@ -69,7 +67,7 @@ class GeneratorTest {
             if (!hints.contains(hint)) {
                 hints.add(hint);
             }
-        }, question -> false);
+        });
         assertFalse(hints.isEmpty(), "Hints should not be empty");
     }
 
