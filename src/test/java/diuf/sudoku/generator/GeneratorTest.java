@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 class GeneratorTest {
     @Test
-    void testGenerate() {
+    void testGenerateAndGet1Hint() {
         Generator generator = new Generator();
         GenerateDialog.Difficulty hard = Hard;
         Grid grid = generator.generate(List.of(Symmetry.BiDiagonal, Symmetry.Orthogonal, Symmetry.Rotational90,
@@ -41,6 +41,33 @@ class GeneratorTest {
             if (!hints.contains(hint)) {
                 hints.add(hint);
                 throw new InterruptedException(); // Stop gathering hints after the first one
+            }
+        }, question -> false);
+        assertFalse(hints.isEmpty(), "Hints should not be empty");
+    }
+
+    @Test
+    void testGenerateAndGetAllHints() {
+        Generator generator = new Generator();
+        GenerateDialog.Difficulty hard = Hard;
+        Grid grid = generator.generate(List.of(Symmetry.BiDiagonal, Symmetry.Orthogonal, Symmetry.Rotational90,
+                        Symmetry.Rotational180, Symmetry.Full),
+                hard.getMinDifficulty(), hard.getMaxDifficulty(), hard.getincludeDifficulty1(), hard.getincludeDifficulty2(),
+                hard.getincludeDifficulty3(), hard.getexcludeDifficulty1(), hard.getexcludeDifficulty2(),
+                hard.getexcludeDifficulty3(), hard.getnotMaxDifficulty1(), hard.getnotMaxDifficulty2(),
+                hard.getnotMaxDifficulty3(), hard.getexcludeTechnique1(), hard.getexcludeTechnique2(),
+                hard.getexcludeTechnique3(), hard.getincludeTechnique1(), hard.getincludeTechnique2(),
+                hard.getincludeTechnique3(), hard.getnotMaxTechnique1(), hard.getnotMaxTechnique2(),
+                hard.getnotMaxTechnique3(), hard.getOneOfThree_1(), hard.getOneOfThree_2(),
+                hard.getOneOfThree_3());
+        assertNotNull(grid, "Generated grid should not be null");
+        log.info("Generated grid:\n{}", grid);
+        Solver solver = new Solver(grid);
+        List<Hint> unfilteredHints = new ArrayList<>();
+        List<Hint> hints = new ArrayList<>();
+        solver.gatherHints(unfilteredHints, hints, hint -> {
+            if (!hints.contains(hint)) {
+                hints.add(hint);
             }
         }, question -> false);
         assertFalse(hints.isEmpty(), "Hints should not be empty");
