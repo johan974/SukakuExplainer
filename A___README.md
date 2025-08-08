@@ -1,4 +1,9 @@
 # Johan ... explaining
+There are 2 branches of this project:
+- master - the original Sudoku Explainer, also for creating the GUI
+- serate - the modified version of Sudoku Explainer for use in my app
+
+# Creating the Explainer GUI
 To create the explainer: 
 - I created a pom.xml Maven file. 
 - Run the app: 
