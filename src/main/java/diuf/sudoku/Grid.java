@@ -2449,6 +2449,12 @@ public class Grid {
 		fixGivens();	// fix #99
     }
 
+	public static Grid fromTable( String text) {
+		Grid grid = new Grid();
+
+		return grid;
+	}
+
 //@SudokuMonster: Changes to allow for FP (NC)    
     /**
      * Applies Naked Single not causing direct eliminations.

@@ -42,6 +42,8 @@ class GeneratorTest {
             }
         });
         assertFalse(hints.isEmpty(), "Hints should not be empty");
+        log.info("First hint: {}", hints.get(0));
+        assertEquals( 81, hints.get(0).getCell().getIndex());
     }
 
     @Test
