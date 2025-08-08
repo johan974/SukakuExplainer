@@ -34,47 +34,7 @@ public class Grid {
 	private boolean[] isGiven = new boolean[81];
 
 	private int isSudoku;  // 1=isSudoku (default), 0=isSukaku (set when Sukaku is loaded)
-	
-//    //cache for Region.getPotentialPositions(value)
-//    private valueCells valueCellsCache = new valueCells();
-//    private class valueCells {
-//        private BitSet[][][] valuePotentialCells = new BitSet[3][9][9]; //region type, region, value
-//
-//        private valueCells() {
-//            for(int regionType = 0; regionType < 3; regionType++) {
-//                for(int region = 0; region < 9; region++) {
-//    	            for(int cell = 0; cell < 9; cell++) {
-//	            		valuePotentialCells[regionType][region][cell] = new BitSet(9);
-//    	            }
-//                }
-//            }
-//        }
-//        public void invalidateCellValue(int cellIndex, int value) {
-//        	for(int t = 0; t < 3; t++) { //region types
-//        		valuePotentialCells[t][cellRegions[cellIndex][t]][value - 1].clear();
-//        	}
-//        }
-//        public void invalidateCell(int cellIndex) {
-//        	for(int t = 0; t < 3; t++) { //region types
-//        		for(int v = 0; v < 9; v++) { //values
-//        			valuePotentialCells[t][cellRegions[cellIndex][t]][v].clear();
-//        		}
-//        	}
-//        }
-//        public BitSet getRegionValueCells(Region region, int value) {
-//        	int regionType = region.getRegionTypeIndex();
-//        	int regionIndex = region.getRegionIndex();
-//        	BitSet result = valuePotentialCells[regionType][regionIndex][value - 1];
-//        	if(result.isEmpty()) { //build
-//        		result = new BitSet(9);
-//                for (int index = 0; index < 9; index++) {
-//                    result.set(index, hasCellPotentialValue(region.getCell(index).getIndex(), value));
-//                }
-//                valuePotentialCells[regionType][regionIndex][value - 1] = result; //store to cache
-//        	}
-//        	return result;
-//        }
-//    }
+
     private static final Cell cells[];
     public static final int[][] regionCellIndex;
     public static final int[][] cellRegions;
